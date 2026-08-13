@@ -10,9 +10,9 @@ const router = express.Router();
 router.use(authMiddleware);
 
 
-const HOSTEL_LAT = 10.825335;
-const HOSTEL_LON = 77.059313;
-const ALLOWED_RADIUS_METERS = 500; 
+const HOSTEL_LAT = 10.827764;
+const HOSTEL_LON = 77.060015;
+const ALLOWED_RADIUS_METERS = 500;
 
 
 const storage = multer.diskStorage({
@@ -45,12 +45,12 @@ const upload = multer({
 
 
 function getDistanceMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000; 
+  const R = 6371000;
   const toRad = deg => deg * Math.PI / 180;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
@@ -70,7 +70,7 @@ router.post('/register', upload.single('image'), async (req, res) => {
     if (!latitude || !longitude || !timestamp || !req.file) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-   
+
     const lat = Number(latitude);
     const lon = Number(longitude);
     const tsNum = Number(timestamp);
@@ -84,7 +84,7 @@ router.post('/register', upload.single('image'), async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    
+
     const ts = new Date(tsNum);
     if (isNaN(ts.getTime())) {
       if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -92,7 +92,7 @@ router.post('/register', upload.single('image'), async (req, res) => {
     }
 
     const dist = getDistanceMeters(lat, lon, HOSTEL_LAT, HOSTEL_LON);
-console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}), distance: ${dist} meters, allowed: ${ALLOWED_RADIUS_METERS}`);
+    console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}), distance: ${dist} meters, allowed: ${ALLOWED_RADIUS_METERS}`);
     const inHostel = dist <= ALLOWED_RADIUS_METERS;
 
     const { session, valid } = getSessionAndValidity(ts);
@@ -119,9 +119,9 @@ console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}),
       return res.status(409).json({ message: 'Attendance already marked for this session' });
     }
 
-    
+
     if (!inHostel) {
-      
+
       const failCount = await Attendance.countDocuments({
         studentId: user._id,
         date: dateStr,
@@ -129,7 +129,7 @@ console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}),
         status: 'failed-location',
       });
       if (failCount < 2) {
-        
+
         const failAttempt = new Attendance({
           studentId: user._id,
           date: dateStr,
@@ -148,7 +148,7 @@ console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}),
           maxAttempts: 3
         });
       } else {
-       
+
         const attendance = new Attendance({
           studentId: user._id,
           date: dateStr,
@@ -163,7 +163,7 @@ console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}),
         return res.json({ message: 'Attendance marked as absent (location invalid after 3 attempts)', attendance });
       }
     } else {
- 
+
       const attendance = new Attendance({
         studentId: user._id,
         date: dateStr,
@@ -178,7 +178,7 @@ console.log(`User at (${lat}, ${lon}), hostel at (${HOSTEL_LAT}, ${HOSTEL_LON}),
       return res.json({ message: 'Attendance marked as present', attendance });
     }
   } catch (err) {
-  
+
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     res.status(500).json({ message: 'Server error', error: err.message });
   }

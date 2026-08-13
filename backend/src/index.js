@@ -88,12 +88,13 @@ async function markAbsentees(session) {
   }
 }
 
-// Schedule jobs: 8:01 AM and 4:01 PM local server time
-cron.schedule('1 8 * * *', async () => {
+// Schedule jobs: 8:00 AM and 12:00 PM for morning time
+cron.schedule('0 8 * * *', async () => {
   console.log('Running absentee marking for morning session...');
   await markAbsentees('morning');
 });
-cron.schedule('1 16 * * *', async () => {
+// Schedule jobs: 1:00 PM and 4:00 PM for evening time
+cron.schedule('0 13 * * *', async () => {
   console.log('Running absentee marking for evening session...');
   await markAbsentees('evening');
 });

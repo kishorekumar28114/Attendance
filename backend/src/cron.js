@@ -45,11 +45,11 @@ async function markAbsentees(session) {
 }
 
 
-cron.schedule('1 12 * * *', async () => {
+cron.schedule('0 8 * * *', async () => {
   console.log('Running absentee marking for morning session...');
   await markAbsentees('morning');
 });
-cron.schedule('1 16 * * *', async () => {
+cron.schedule('0 13 * * *', async () => {
   console.log('Running absentee marking for evening session...');
   await markAbsentees('evening');
 });
