@@ -55,8 +55,27 @@ function getDistanceMeters(lat1, lon1, lat2, lon2) {
 }
 
 
+function getIstDateTime(dateObj) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false
+  });
+  const parts = formatter.formatToParts(dateObj);
+  const partMap = {};
+  for (const part of parts) {
+    partMap[part.type] = part.value;
+  }
+  const dateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
+  const hour = parseInt(partMap.hour, 10);
+  return { dateStr, hour };
+}
+
 function getSessionAndValidity(dateObj) {
-  const hour = dateObj.getHours();
+  const { hour } = getIstDateTime(dateObj);
   if (hour >= 9 && hour < 11) return { session: 'morning', valid: true };
   if (hour >= 11 && hour < 16) return { session: 'evening', valid: true };
   return { session: null, valid: false };
@@ -96,9 +115,9 @@ router.post('/register', upload.single('image'), async (req, res) => {
     const inHostel = dist <= ALLOWED_RADIUS_METERS;
 
     const { session, valid } = getSessionAndValidity(ts);
+    const { dateStr } = getIstDateTime(ts);
     if (!valid) {
-      const today = ts.toISOString().slice(0, 10);
-      const count = await Attendance.countDocuments({ studentId: user._id, date: today, session: { $in: ['morning', 'evening'] } });
+      const count = await Attendance.countDocuments({ studentId: user._id, date: dateStr, session: { $in: ['morning', 'evening'] } });
       if (count >= 3) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         return res.status(400).json({ message: 'Max attempts reached for today' });
@@ -107,7 +126,6 @@ router.post('/register', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'Attendance not in allowed time slot' });
     }
 
-    const dateStr = ts.toISOString().slice(0, 10);
     const already = await Attendance.findOne({
       studentId: user._id,
       date: dateStr,

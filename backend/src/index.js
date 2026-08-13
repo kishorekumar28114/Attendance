@@ -55,7 +55,14 @@ const Attendance = require('./models/Attendance');
 
 function getTodayDateStr() {
   const now = new Date();
-  return now.toISOString().slice(0, 10);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const [{ value: month }, , { value: day }, , { value: year }] = formatter.formatToParts(now);
+  return `${year}-${month}-${day}`;
 }
 
 async function markAbsentees(session) {
